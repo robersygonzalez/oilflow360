@@ -1,0 +1,39 @@
+Para que le saques todo el jugo y se lo muestres a cualquiera como un profesional, aquí tienes todo lo que puedes probar e interactuar ahora mismo en la app:
+
+Reacción de Alertas Automáticas:
+
+Quédate mirando la tabla. Cuando la presión de cualquier pozo supere de forma aleatoria los 1,600 PSI, verás que su badge pasa automáticamente a rojo ("Crítico").
+
+Al instante, se genera una nueva alerta en el panel derecho registrando el evento con la hora exacta.
+
+Modal de Inspección y Control de Pozos:
+
+Haz clic en el botón "Inspeccionar" de cualquier pozo (especialmente si se pone en rojo/crítico).
+
+Se abrirá un Modal Interactivo con las métricas detalladas del pozo.
+
+Presiona el botón "Poner en Mantenimiento": verás cómo la presión se normaliza automáticamente a valores seguros (1,400 PSI), su estado cambia a amarillo ("Mantenimiento") y se dispara un evento de resolución en el historial.
+
+Buscador y Filtro por Estado:
+
+Usa la barra de búsqueda arriba de la tabla. Escribe palabras como "Zulia" o el nombre de un pozo para ver el filtrado en tiempo real.
+
+Haz clic en los botones de filtro (Todos, Operativo, Mantenimiento, Crítico) para aislar solo los activos que necesiten atención.
+
+Gráfica Deslizante en Tiempo Real:
+
+Mira la gráfica de producción (Recharts). No es una animación fija: mantiene una ventana deslizante de 16 puntos. Cada 3 segundos elimina el dato más viejo y agrega el más reciente en el eje horizontal con su timestamp real.
+
+KPIs Dinámicos:
+
+Las 4 tarjetas de la parte superior (Producción Total, Eficiencia %, Presión Promedio de Red y Alertas Activas) se recalculan en vivo sumando y promediando los valores de todos los pozos en cada tick.
+
+Switch de Idioma en Vivo (ES / EN):
+
+Cambia el selector en el Header. No solo traducirá la interfaz estática, sino también los mensajes generados dinámicamente en el feed de alertas y el contenido del modal.
+
+Abre [https://oilflow360.vercel.app/](https://oilflow360.vercel.app/), interactúa con el modal y los filtros, ¡y dime qué te parece el nivel que agarró el proyecto!
+
+¿Quieres que agreguemos un botón para simular una falla masiva o emergencia manual?
+
+Sí
