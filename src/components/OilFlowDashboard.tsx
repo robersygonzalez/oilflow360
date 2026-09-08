@@ -18,158 +18,18 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { formatAlertMessage } from "../i18n/formatAlertMessage";
 import { translations } from "../i18n/translations";
+import { WELL_STATUS_STYLES } from "../lib/wellStatusStyles";
 import { useLanguageStore } from "../store/useLanguageStore";
+import {
+  useOilFlowStore,
+  useTelemetrySimulator,
+  type WellStatus,
+} from "../store/useOilFlowStore";
+import WellInspectModal from "./WellInspectModal";
 
-type AssetStatus = "normal" | "warning" | "critical";
-
-type LocalizedText = { es: string; en: string };
-
-type Well = {
-  id: string;
-  name: string;
-  location: LocalizedText;
-  status: AssetStatus;
-  pressure: number;
-  temperature: number;
-};
-
-type AlertSeverity = "info" | "warning" | "critical";
-
-type AlertEvent = {
-  id: string;
-  time: string;
-  message: LocalizedText;
-  severity: AlertSeverity;
-};
-
-type ProductionPoint = {
-  hour: string;
-  bpd: number;
-};
-
-const WELLS: Well[] = [
-  {
-    id: "w-01",
-    name: "Pozo Cardón IV",
-    location: { es: "Cuenca de Falcón, VE", en: "Falcón Basin, VE" },
-    status: "normal",
-    pressure: 1420,
-    temperature: 78,
-  },
-  {
-    id: "w-02",
-    name: "Pozo Bare-1X",
-    location: { es: "Faja del Orinoco, VE", en: "Orinoco Belt, VE" },
-    status: "warning",
-    pressure: 1610,
-    temperature: 91,
-  },
-  {
-    id: "w-03",
-    name: "Pozo Lagunillas-7",
-    location: { es: "Lago de Maracaibo, VE", en: "Lake Maracaibo, VE" },
-    status: "normal",
-    pressure: 1380,
-    temperature: 74,
-  },
-  {
-    id: "w-04",
-    name: "Pozo Tía Juana-12",
-    location: { es: "Zulia, VE", en: "Zulia, VE" },
-    status: "critical",
-    pressure: 1875,
-    temperature: 104,
-  },
-  {
-    id: "w-05",
-    name: "Pozo Boscán-3",
-    location: { es: "Zulia, VE", en: "Zulia, VE" },
-    status: "normal",
-    pressure: 1410,
-    temperature: 76,
-  },
-];
-
-const ALERTS: AlertEvent[] = [
-  {
-    id: "a-1",
-    time: "09:42:11",
-    message: {
-      es: "Presión de red por encima del umbral en Pozo Tía Juana-12",
-      en: "Network pressure above threshold at Well Tía Juana-12",
-    },
-    severity: "critical",
-  },
-  {
-    id: "a-2",
-    time: "09:15:47",
-    message: {
-      es: "Vibración anómala detectada en bomba de Pozo Bare-1X",
-      en: "Anomalous vibration detected on Well Bare-1X pump",
-    },
-    severity: "warning",
-  },
-  {
-    id: "a-3",
-    time: "08:58:03",
-    message: {
-      es: "Recalibración automática de sensor completada en Pozo Boscán-3",
-      en: "Automatic sensor recalibration completed at Well Boscán-3",
-    },
-    severity: "info",
-  },
-  {
-    id: "a-4",
-    time: "08:30:22",
-    message: {
-      es: "Mantenimiento preventivo programado para Pozo Lagunillas-7",
-      en: "Preventive maintenance scheduled for Well Lagunillas-7",
-    },
-    severity: "info",
-  },
-  {
-    id: "a-5",
-    time: "07:54:16",
-    message: {
-      es: "Caída temporal de telemetría en Pozo Cardón IV (restablecida)",
-      en: "Temporary telemetry outage at Well Cardón IV (restored)",
-    },
-    severity: "warning",
-  },
-];
-
-const PRODUCTION_DATA: ProductionPoint[] = [
-  { hour: "00:00", bpd: 13120 },
-  { hour: "02:00", bpd: 13340 },
-  { hour: "04:00", bpd: 13580 },
-  { hour: "06:00", bpd: 13890 },
-  { hour: "08:00", bpd: 14020 },
-  { hour: "10:00", bpd: 14180 },
-  { hour: "12:00", bpd: 14250 },
-  { hour: "14:00", bpd: 14190 },
-  { hour: "16:00", bpd: 14310 },
-  { hour: "18:00", bpd: 14260 },
-  { hour: "20:00", bpd: 14150 },
-  { hour: "22:00", bpd: 14250 },
-];
-
-const STATUS_STYLES: Record<AssetStatus, { badge: string; dot: string }> = {
-  normal: {
-    badge: "bg-emerald-500/10 text-emerald-400 border-emerald-500/30",
-    dot: "bg-emerald-400",
-  },
-  warning: {
-    badge: "bg-amber-500/10 text-amber-400 border-amber-500/30",
-    dot: "bg-amber-400",
-  },
-  critical: {
-    badge: "bg-red-500/10 text-red-400 border-red-500/30",
-    dot: "bg-red-400",
-  },
-};
-
-const SEVERITY_STYLES: Record<AlertSeverity, { dot: string; text: string }> = {
+const SEVERITY_STYLES: Record<string, { dot: string; text: string }> = {
   info: { dot: "bg-sky-400", text: "text-sky-400" },
   warning: { dot: "bg-amber-400", text: "text-amber-400" },
   critical: { dot: "bg-red-400", text: "text-red-400" },
@@ -252,9 +112,19 @@ function LanguageToggle() {
 }
 
 export default function OilFlowDashboard() {
+  useTelemetrySimulator();
+
   const now = useLiveClock();
   const language = useLanguageStore((state) => state.language);
   const t = translations[language];
+
+  const wells = useOilFlowStore((state) => state.wells);
+  const history = useOilFlowStore((state) => state.history);
+  const alerts = useOilFlowStore((state) => state.alerts);
+  const selectWell = useOilFlowStore((state) => state.selectWell);
+
+  const [searchText, setSearchText] = useState("");
+  const [statusFilter, setStatusFilter] = useState<WellStatus | "all">("all");
 
   const formattedTime = useMemo(
     () =>
@@ -276,6 +146,47 @@ export default function OilFlowDashboard() {
       }),
     [now, t.locale]
   );
+
+  const totalProduction = useMemo(
+    () => wells.reduce((sum, well) => sum + well.production, 0),
+    [wells]
+  );
+
+  const averagePressure = useMemo(
+    () =>
+      wells.length
+        ? Math.round(
+            wells.reduce((sum, well) => sum + well.pressure, 0) / wells.length
+          )
+        : 0,
+    [wells]
+  );
+
+  const criticalCount = useMemo(
+    () => wells.filter((well) => well.status === "critical").length,
+    [wells]
+  );
+
+  const efficiency = useMemo(
+    () =>
+      wells.length
+        ? (((wells.length - criticalCount) / wells.length) * 100).toFixed(1)
+        : "0.0",
+    [wells, criticalCount]
+  );
+
+  const filteredWells = useMemo(() => {
+    const query = searchText.trim().toLowerCase();
+    return wells.filter((well) => {
+      const matchesStatus = statusFilter === "all" || well.status === statusFilter;
+      const matchesQuery =
+        query === "" ||
+        well.name.toLowerCase().includes(query) ||
+        well.location.es.toLowerCase().includes(query) ||
+        well.location.en.toLowerCase().includes(query);
+      return matchesStatus && matchesQuery;
+    });
+  }, [wells, searchText, statusFilter]);
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
@@ -335,25 +246,25 @@ export default function OilFlowDashboard() {
           <KpiCard
             icon={<Droplet className="h-5 w-5" />}
             label={t.kpis.productionTotal}
-            value="14,250 bpd"
+            value={`${Math.round(totalProduction).toLocaleString()} bpd`}
             accent="emerald"
           />
           <KpiCard
             icon={<Gauge className="h-5 w-5" />}
             label={t.kpis.operationalEfficiency}
-            value="98.2%"
+            value={`${efficiency}%`}
             accent="sky"
           />
           <KpiCard
             icon={<Activity className="h-5 w-5" />}
             label={t.kpis.networkPressure}
-            value="1,450 PSI"
+            value={`${averagePressure.toLocaleString()} PSI`}
             accent="amber"
           />
           <KpiCard
             icon={<AlertTriangle className="h-5 w-5" />}
             label={t.kpis.activeAlerts}
-            value="2"
+            value={String(criticalCount)}
             accent="red"
           />
         </section>
@@ -374,7 +285,7 @@ export default function OilFlowDashboard() {
             </div>
             <div className="h-72">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={PRODUCTION_DATA}>
+                <AreaChart data={history}>
                   <defs>
                     <linearGradient id="productionFill" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#34d399" stopOpacity={0.35} />
@@ -383,7 +294,7 @@ export default function OilFlowDashboard() {
                   </defs>
                   <CartesianGrid stroke="#1e293b" strokeDasharray="3 3" />
                   <XAxis
-                    dataKey="hour"
+                    dataKey="time"
                     stroke="#64748b"
                     tick={{ fill: "#64748b", fontSize: 12 }}
                     tickLine={false}
@@ -415,6 +326,7 @@ export default function OilFlowDashboard() {
                     stroke="#34d399"
                     strokeWidth={2}
                     fill="url(#productionFill)"
+                    isAnimationActive={false}
                   />
                 </AreaChart>
               </ResponsiveContainer>
@@ -428,8 +340,8 @@ export default function OilFlowDashboard() {
                 {t.events.title}
               </h2>
             </div>
-            <ul className="space-y-3">
-              {ALERTS.map((alert) => {
+            <ul className="max-h-72 space-y-3 overflow-y-auto pr-1">
+              {alerts.map((alert) => {
                 const style = SEVERITY_STYLES[alert.severity];
                 return (
                   <li key={alert.id} className="flex gap-3">
@@ -438,7 +350,7 @@ export default function OilFlowDashboard() {
                     />
                     <div>
                       <p className="text-sm leading-snug text-slate-300">
-                        {alert.message[language]}
+                        {formatAlertMessage(alert, language, t)}
                       </p>
                       <p className={`mt-0.5 text-xs font-mono ${style.text}`}>
                         {alert.time}
@@ -452,11 +364,38 @@ export default function OilFlowDashboard() {
         </section>
 
         <section className="rounded-lg border border-slate-800 bg-slate-900 p-4">
-          <h2 className="mb-4 text-sm font-semibold text-slate-200">
-            {t.wells.title}
-          </h2>
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-sm font-semibold text-slate-200">
+              {t.wells.title}
+            </h2>
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-500" />
+                <input
+                  type="text"
+                  value={searchText}
+                  onChange={(event) => setSearchText(event.target.value)}
+                  placeholder={t.wells.searchPlaceholder}
+                  className="w-56 rounded-md border border-slate-700 bg-slate-950 py-1.5 pl-8 pr-2.5 text-xs text-slate-200 placeholder:text-slate-500 focus:border-emerald-500/50 focus:outline-none"
+                />
+              </div>
+              <select
+                value={statusFilter}
+                onChange={(event) =>
+                  setStatusFilter(event.target.value as WellStatus | "all")
+                }
+                className="rounded-md border border-slate-700 bg-slate-950 px-2.5 py-1.5 text-xs text-slate-200 focus:border-emerald-500/50 focus:outline-none"
+              >
+                <option value="all">{t.wells.filterAllStatuses}</option>
+                <option value="operational">{t.wells.status.operational}</option>
+                <option value="maintenance">{t.wells.status.maintenance}</option>
+                <option value="critical">{t.wells.status.critical}</option>
+              </select>
+            </div>
+          </div>
+
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[640px] text-left text-sm">
+            <table className="w-full min-w-[720px] text-left text-sm">
               <thead>
                 <tr className="border-b border-slate-800 text-xs uppercase tracking-wide text-slate-500">
                   <th className="pb-2 pr-4 font-medium">
@@ -480,8 +419,8 @@ export default function OilFlowDashboard() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800">
-                {WELLS.map((well) => {
-                  const style = STATUS_STYLES[well.status];
+                {filteredWells.map((well) => {
+                  const style = WELL_STATUS_STYLES[well.status];
                   return (
                     <tr key={well.id} className="text-slate-300">
                       <td className="py-3 pr-4 font-medium text-slate-100">
@@ -499,14 +438,15 @@ export default function OilFlowDashboard() {
                         </span>
                       </td>
                       <td className="py-3 pr-4 font-mono">
-                        {well.pressure.toLocaleString()} PSI
+                        {Math.round(well.pressure).toLocaleString()} PSI
                       </td>
                       <td className="py-3 pr-4 font-mono">
-                        {well.temperature}°C
+                        {well.temperature.toFixed(1)}°C
                       </td>
                       <td className="py-3">
                         <button
                           type="button"
+                          onClick={() => selectWell(well.id)}
                           className="inline-flex items-center gap-1.5 rounded-md border border-slate-700 px-2.5 py-1 text-xs font-medium text-slate-300 transition-colors hover:border-emerald-500/50 hover:text-emerald-400"
                         >
                           <Search className="h-3.5 w-3.5" />
@@ -521,6 +461,8 @@ export default function OilFlowDashboard() {
           </div>
         </section>
       </main>
+
+      <WellInspectModal />
     </div>
   );
 }

@@ -17,7 +17,7 @@ export const translations = {
     },
     chart: {
       title: "Tendencia de Producción",
-      subtitle: "Barriles por día (bpd) — últimas 24 horas",
+      subtitle: "Barriles por día (bpd) — actualización en vivo",
       tooltipLabel: "Producción",
     },
     events: {
@@ -31,14 +31,29 @@ export const translations = {
         status: "Estado",
         pressure: "Presión",
         temperature: "Temperatura",
+        production: "Producción",
         actions: "Acciones",
       },
       inspect: "Inspeccionar",
       status: {
-        normal: "Normal",
-        warning: "Advertencia",
+        operational: "Operativo",
+        maintenance: "Mantenimiento",
         critical: "Crítico",
       },
+      searchPlaceholder: "Buscar por nombre o ubicación…",
+      filterAllStatuses: "Todos los estados",
+    },
+    modal: {
+      title: "Detalle del Pozo",
+      currentStatus: "Estado Actual",
+      setMaintenance: "Poner en Mantenimiento",
+      setOperational: "Marcar Operativo",
+    },
+    alerts: {
+      pressureThreshold:
+        "Presión de red por encima del umbral en {well} ({value} PSI)",
+      maintenanceSet: "{well} puesto en mantenimiento — presión normalizada",
+      operationalRestored: "{well} reactivado y marcado como operativo",
     },
   },
   en: {
@@ -57,7 +72,7 @@ export const translations = {
     },
     chart: {
       title: "Production Trend",
-      subtitle: "Barrels per day (bpd) — last 24 hours",
+      subtitle: "Barrels per day (bpd) — live update",
       tooltipLabel: "Production",
     },
     events: {
@@ -71,14 +86,29 @@ export const translations = {
         status: "Status",
         pressure: "Pressure",
         temperature: "Temperature",
+        production: "Production",
         actions: "Actions",
       },
       inspect: "Inspect",
       status: {
-        normal: "Normal",
-        warning: "Warning",
+        operational: "Operational",
+        maintenance: "Maintenance",
         critical: "Critical",
       },
+      searchPlaceholder: "Search by name or location…",
+      filterAllStatuses: "All statuses",
+    },
+    modal: {
+      title: "Well Detail",
+      currentStatus: "Current Status",
+      setMaintenance: "Set to Maintenance",
+      setOperational: "Mark as Operational",
+    },
+    alerts: {
+      pressureThreshold:
+        "Network pressure above threshold at {well} ({value} PSI)",
+      maintenanceSet: "{well} set to maintenance — pressure normalized",
+      operationalRestored: "{well} restored and marked operational",
     },
   },
 } as const satisfies Record<Language, unknown>;
